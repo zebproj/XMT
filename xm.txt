@@ -6,8 +6,7 @@
 
 ============================================================================
 Some additions and a few corrections were made by ByteRaver & Wodan from
-TNT / NO-ID. Reach me at erlandvo@hotmail.com for further questions.
-============================================================================
+TNT / NO-ID. Reach me at erlandvo@hotmail.com for further questions.  ============================================================================
 
 When you have to implement the XM file format in your loader, keep in
 mind that Triton's philosophy goes a bit like this: "If it's zero or
@@ -139,6 +138,8 @@ Envelope points: x,y...x,y.... in couples (2 words/point => a maximum of 12 poin
 +238      1   (byte) Vibrato rate
 +239      2   (word) Volume fadeout
 +241     11   (word) Reserved
+
+--this should be 22 bytes (11 2-byte words), not 11 bytes
 
 You should use the "sample header size" (first field of second part of
 instrumentheader) to compute the total size of the 2 headers as stored

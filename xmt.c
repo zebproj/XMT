@@ -10,6 +10,27 @@
 #define VOLUME 0b100
 #define FX 0b1000
 #define PARAM 0b10000
+
+typedef struct 
+{
+	char id_text[17];
+	char tracker_name[20];
+	char module_name[20];
+	char var;
+	uint16_t version;
+	uint32_t header_size;
+	uint16_t song_length;
+	uint16_t restart_position;
+	uint16_t num_channels;
+	uint16_t num_patterns;
+	uint16_t num_instruments;
+	uint16_t freq_table;
+	uint16_t speed;
+	uint16_t BPM;
+	uint8_t ptable[256];
+}
+xm_params;
+
 typedef struct
 {
 	uint8_t pscheme;
@@ -54,7 +75,7 @@ xm_note make_note(
 	return n;
 }
 
-void init_note(xm_note *n)
+void init_note(xm_params *p)
 {
 	
 }
@@ -86,6 +107,29 @@ typedef struct
 }
 xm_pat;
 
+typedef struct
+{
+	uint16_t x, y;
+}point;
+
+typedef struct
+{
+	uint32_t length;
+	uint32_t loop_start;
+	uint32_t loop_length;
+	uint8_t volume;
+	int8_t finetune;
+	uint8_t type;
+	uint8_t panning;
+	int8_t nn;
+	int8_t reserved;	
+	char sample_name[22];
+
+	/*precursor to using libsndfile to embed samples*/
+	int8_t temp_buf[100];
+}
+xm_sample;
+
 typedef struct 
 {
 	uint32_t size;
@@ -93,6 +137,29 @@ typedef struct
 	uint8_t type;
 	uint16_t num_samples;
 
+	/*if num_samples > 0, these become important */
+	uint32_t sample_header_size;
+	uint8_t sample_map[96];
+	point volume_points[12];
+	point envelope_points[12];
+
+	uint8_t num_volume_points;
+	uint8_t num_envelope_points;
+	uint8_t vol_sustain;
+	uint8_t vol_loop_start;
+	uint8_t vol_loop_end;
+	uint8_t pan_sustain;
+	uint8_t pan_loop_start;
+	uint8_t pan_loop_end;
+	uint8_t vol_type;
+	uint8_t pan_type;
+	uint8_t vib_type;
+	uint8_t vib_sweep;
+	uint8_t vib_depth;
+	uint8_t vib_rate;
+	uint16_t vol_fadeout;
+	/*reserved 11-byte thing here(?)*/
+	uint16_t reserved[11];
 }
 xm_ins;
 
@@ -143,10 +210,14 @@ void set_BPM(xm_file *f, uint8_t bpm)
 {
 	f->BPM =  bpm;
 }
-//fix this implementation
-void set_nchan(xm_file *f, uint8_t n)
+//TODO fix this implementation
+void set_nchan(xm_params *p, uint8_t n)
 {
-	f->num_channels = 1<<n;
+	if(n % 2 == 0)	
+	p->num_channels = n;
+	else
+	p->num_channels = n + 1;
+	
 }
 void set_speed(xm_file *f, uint8_t speed) 
 {	
@@ -184,13 +255,74 @@ void init_xm_pat(xm_file *f)
 
 void init_xm_ins(xm_file *f, xm_ins *i)
 {
-	i->size = 0x1d;
+	//i->size = 0x1d;
+	i->size = 0x107;
 	memset(i->name, 0, sizeof(char) * 22);
-	i->type = 0;
-	i->num_samples = 0;
+	i->type = 0; 
+	i->num_samples = 1;
+	memset(i->sample_map, 0, sizeof(uint8_t) * 96);
+	int k;
+	for(k = 0; k < 12; k++){
+		i->volume_points[k].x = 0;
+		i->volume_points[k].y = 0;
+		i->envelope_points[k].x = 0;
+		i->envelope_points[k].y = 0;
+	}
+	i->sample_header_size = 0x28;
+	i->num_volume_points = 0;
+	i->num_envelope_points = 0;
+	i->vol_sustain = 0;
+	i->vol_loop_start = 0;
+	i->vol_loop_end = 0;
+	i->pan_sustain = 0;
+	i->pan_loop_start = 0;
+	i->pan_loop_end = 0;
+	i->vol_type = 0;
+	i->pan_type = 0;
+	i->vib_type = 0;
+	i->vib_sweep = 0;
+	i->vib_depth = 0;
+	i->vib_rate = 0;
+	i->vol_fadeout = 0x7fff;
+	memset(i->reserved, 0, sizeof(uint16_t) * 11);
+} 
+void init_xm_params(xm_params *p)
+{
+	memset(p->id_text, 0x0, sizeof(char) * 17);
+	sprintf(p->id_text, "Extended Module:");
+	memset(p->module_name, 0x0, sizeof(char) * 20);
+	sprintf(p->module_name, "Test Module");
+	memset(p->tracker_name, ' ', sizeof(char) * 20);
+	sprintf(p->tracker_name, "Milkytracker");
+	p->var = 0x1a;
+	p->version = 0x0104;
+	p->header_size = 0x114;
+	p->song_length = 0x01;
+	p->restart_position = 0x00;
+	p->num_channels = 0x08;
+	p->num_patterns= 0x01;
+	p->num_instruments= 0x01;
+	p->freq_table = LINEAR;
+	p->speed = 6;
+	p->BPM = 125;
 }
 
-void init_xm_file(xm_file *f){
+void init_xm_sample(xm_sample *s)
+{
+	s->length = 0x64;
+	s->loop_start = 0;
+	s->loop_length= 0x64;
+	s->volume = 0;
+	s->finetune= 0;
+	s->type = 0;
+	s->panning = 0x8;
+	s->nn = 0;
+	s->reserved = 0;
+	memset(s->sample_name, 0, sizeof(char) * 22);
+	memset(s->temp_buf, 0, sizeof(char) * 100);
+}
+
+void init_xm_file(xm_file *f, xm_params *p){
 	f->file = fopen("test.xm", "wb");
 	memset(f->id_text, 0x0, sizeof(char) * 17);
 	sprintf(f->id_text, "Extended Module:");
@@ -198,17 +330,17 @@ void init_xm_file(xm_file *f){
 	sprintf(f->module_name, "Test Module");
 	memset(f->tracker_name, ' ', sizeof(char) * 20);
 	sprintf(f->tracker_name, "Milkytracker");
-	f->var = 0x1a;
-	f->version = 0x0104;
-	f->header_size = 0x114;
-	f->song_length = 0x01;
-	f->restart_position = 0x00;
-	f->num_channels = 0x08;
-	f->num_patterns= 0x01;
-	f->num_instruments= 0x01;
-	f->freq_table = LINEAR;
-	f->speed = 6;
-	f->BPM = 125;
+	f->var = p->var;
+	f->version = p->version;
+	f->header_size = p->header_size;
+	f->song_length = p->song_length;
+	f->restart_position = p->restart_position;
+	f->num_channels = p->num_channels;
+	f->num_patterns= p->num_patterns;
+	f->num_instruments= p->num_instruments;
+	f->freq_table = p->freq_table;
+	f->speed = p->speed;
+	f->BPM = p->BPM;
 	//initialize pattern table
 	memset(f->ptable, 0x0, sizeof(uint8_t) * 256);
 	init_xm_pat(f);
@@ -246,6 +378,47 @@ void write_instrument_data(xm_file *f)
 	fwrite(f->ins[0].name, sizeof(char), 22, f->file);
 	fwrite(&f->ins[0].type, sizeof(uint8_t), 1, f->file);
 	fwrite(&f->ins[0].num_samples, sizeof(uint16_t), 1, f->file);
+	if(f->ins[0].num_samples!= 0){
+		fwrite(&f->ins[0].sample_header_size, sizeof(uint16_t), 1, f->file);
+		fwrite(&f->ins[0].sample_header_size, sizeof(uint16_t), 1, f->file);
+		fwrite(&f->ins[0].sample_map, sizeof(uint8_t), 96, f->file);
+		fwrite(&f->ins[0].volume_points, sizeof(point), 12, f->file);
+		fwrite(&f->ins[0].envelope_points, sizeof(point), 12, f->file);
+		fwrite(&f->ins[0].num_volume_points, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].num_envelope_points, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vol_sustain, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vol_loop_start, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vol_loop_end, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].pan_sustain, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].pan_loop_start, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].pan_loop_end, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vol_type, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].pan_type, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vib_type, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vib_sweep, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vib_depth, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vib_rate, sizeof(uint8_t), 1, f->file);
+		fwrite(&f->ins[0].vol_fadeout, sizeof(uint16_t), 1, f->file);
+		fwrite(&f->ins[0].reserved, sizeof(uint16_t), 11, f->file);
+
+		/*crudely write dummy sample data for testing purposes */
+		xm_sample s;
+		init_xm_sample(&s);
+		fwrite(&s.length, sizeof(uint32_t), 1, f->file);
+		fwrite(&s.loop_start, sizeof(uint32_t), 1, f->file);
+		fwrite(&s.loop_length, sizeof(uint32_t), 1, f->file);
+		fwrite(&s.volume, sizeof(uint8_t), 1, f->file);
+		fwrite(&s.finetune, sizeof(int8_t), 1, f->file);
+		fwrite(&s.type, sizeof(uint8_t), 1, f->file);
+		fwrite(&s.panning, sizeof(uint8_t), 1, f->file);
+		fwrite(&s.nn, sizeof(int8_t), 1, f->file);
+		fwrite(&s.reserved, sizeof(int8_t), 1, f->file);
+		fwrite(&s.sample_name, sizeof(char), 22, f->file);
+		fwrite(&s.temp_buf, sizeof(int8_t), 100, f->file);
+
+
+	}
+
 }
 
 void write_header_data(xm_file *f){
@@ -275,20 +448,20 @@ void write_xm_file(xm_file *f){
 
 int main()
 {
+	xm_params p; 
 	xm_file file;
+	init_xm_params(&p);
+	set_nchan(&p, 8);
+	init_xm_file(&file, &p);
 
-	init_xm_file(&file);
-
-	update_ptable(&file, 1, 1);
-	/*users shouldn't be able to set the channel numbers after initialization*/
-	//set_nchan(&file, 2);
-	add_note(&file, 1, 0, 0, make_note(60, 1, 0, 0, 0));
-	add_note(	
-			&file, 
-			0,
-			0,
-			1,
-			make_note(62, 0, 20, 0, 0));
+	//update_ptable(&file, 1, 1);
+	add_note(&file, 0, 0, 0, make_note(60, 1, 0, 0, 0));
+	//add_note(	
+	//		&file, 
+	//		0,
+	//		0,
+	//		1,
+	//		make_note(62, 0, 20, 0, 0));
 
 	write_xm_file(&file);
 
