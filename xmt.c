@@ -232,6 +232,9 @@ typedef struct
 
 	xm_pat pat[256];
 	xm_ins ins[256];
+
+	/*test file */
+	FILE *test_file;
 }
 xm_file;
 
@@ -239,19 +242,23 @@ int8_t scale_8(double s){
 	return (uint8_t)(s * 0x7f);
 }
 
-void write_delta_data(double *buffer, FILE *out, int count)
+int8_t write_delta_data(uint8_t *buffer, FILE *out, int count, int8_t prev)
 {
 	int8_t delta_buffer[count];
-	int8_t prev = 0, tmp;
+	int8_t tmp;
 	int i;
 
 	for(i = 0; i < count; i++){
-		tmp = scale_8(buffer[i]);
+		//tmp = scale_8(buffer[i]);
+		tmp = buffer[i] - 0x7f;
 		delta_buffer[i] = prev - tmp;
 		prev = tmp;
+
+		//delta_buffer[i] = buffer[i];
 	}
 
 	fwrite(delta_buffer, sizeof(int8_t), count, out);
+	return prev;
 }
 
 void add_note(	xm_file *f, 
@@ -417,6 +424,9 @@ void init_xm_file(xm_file *f, xm_params *p){
 	memset(f->ptable, 0x0, sizeof(uint8_t) * 256);
 	init_xm_pat(f);
 
+	/*open test file*/
+
+	f->test_file = fopen("test_file.raw", "w");
 }
 
 void update_ptable(xm_file *f, uint8_t pos, uint8_t pnum){
@@ -435,7 +445,7 @@ int add_instrument(xm_file *f)
 	return n - 1;
 }
 
-int add_samp(xm_file *f, xm_samp_params *s, uint8_t ins)
+long add_samp(xm_file *f, xm_samp_params *s, uint8_t ins)
 {
 	if(ins > f->num_instruments)
 	{
@@ -477,12 +487,15 @@ void write_sample_data(xm_file *f, int insnum)
 		fwrite(&s->nn, sizeof(int8_t), 1, f->file);
 		fwrite(&s->reserved, sizeof(int8_t), 1, f->file);
 		fwrite(&s->sample_name, sizeof(char), 22, f->file);
-		double buffer[BSIZE];
+		uint8_t buffer[BSIZE];
 		int count;
+		int8_t prev = 0;
 		while(count != 0)
 		{
-			count = sf_read_double(s->sfile, buffer, BSIZE);
-			write_delta_data(buffer,f->file, count);
+			//count = sf_read_double(s->sfile, buffer, BSIZE);
+			count = sf_read_raw(s->sfile, buffer, BSIZE * sizeof(uint8_t));
+			//write_delta_data(buffer,f->file, count);
+			prev = write_delta_data(buffer,f->file, count, prev);
 		}
 		//fwrite(&s.temp_buf, sizeof(int8_t), 100, f->file);
 		sf_close(s->sfile);
@@ -547,11 +560,14 @@ void write_header_data(xm_file *f){
 }
 
 
-void write_xm_file(xm_file *f){
+
+void write_xm_file(xm_file *f)
+{
 	write_header_data(f);
 	write_pattern_data(f);
 	write_instrument_data(f);
 	fclose(f->file);
+	fclose(f->test_file);
 }
 
 int main()
