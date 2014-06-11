@@ -540,7 +540,6 @@ void write_instrument_data(xm_file *f)
 
 }
 
-
 void write_header_data(xm_file *f){
 	fwrite(f->id_text, sizeof(char), sizeof(f->id_text), f->file);
 	fwrite(f->module_name, sizeof(char), sizeof(f->module_name), f->file);
@@ -558,8 +557,6 @@ void write_header_data(xm_file *f){
 	fwrite(&f->BPM, sizeof(uint16_t), 1, f->file);
 	fwrite(f->ptable, sizeof(uint8_t), 256, f->file);
 }
-
-
 
 void write_xm_file(xm_file *f)
 {
@@ -582,7 +579,7 @@ int main()
 	xm_samp_params sparams = new_samp("pad8bit.wav");
 	add_samp(&file, &sparams, sine);
 	//sparams = new_samp("brendan.wav");
-	int note[] = {60, 62, 67, 71};
+	int note[] = {72, 74, 79, 83};
 	int i;
 
 	for(i = 0; i < 4; i++) 
