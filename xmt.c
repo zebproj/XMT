@@ -232,9 +232,6 @@ typedef struct
 
 	xm_pat pat[256];
 	xm_ins ins[256];
-
-	/*test file */
-	FILE *test_file;
 }
 xm_file;
 
@@ -242,15 +239,16 @@ int8_t scale_8(double s){
 	return (uint8_t)(s * 0x7f);
 }
 
-int8_t write_delta_data(uint8_t *buffer, FILE *out, int count, int8_t prev)
+//int8_t write_delta_data(uint8_t *buffer, FILE *out, int count, int8_t prev)
+int8_t write_delta_data(double *buffer, FILE *out, int count, int8_t prev)
 {
 	int8_t delta_buffer[count];
 	int8_t tmp;
 	int i;
 
 	for(i = 0; i < count; i++){
-		//tmp = scale_8(buffer[i]);
-		tmp = buffer[i] - 0x7f;
+		tmp = scale_8(buffer[i]);
+		//tmp = buffer[i] - 0x7f;
 		delta_buffer[i] = prev - tmp;
 		prev = tmp;
 
@@ -424,9 +422,6 @@ void init_xm_file(xm_file *f, xm_params *p){
 	memset(f->ptable, 0x0, sizeof(uint8_t) * 256);
 	init_xm_pat(f);
 
-	/*open test file*/
-
-	f->test_file = fopen("test_file.raw", "w");
 }
 
 void update_ptable(xm_file *f, uint8_t pos, uint8_t pnum){
@@ -487,17 +482,15 @@ void write_sample_data(xm_file *f, int insnum)
 		fwrite(&s->nn, sizeof(int8_t), 1, f->file);
 		fwrite(&s->reserved, sizeof(int8_t), 1, f->file);
 		fwrite(&s->sample_name, sizeof(char), 22, f->file);
-		uint8_t buffer[BSIZE];
+		//uint8_t buffer[BSIZE];
+        double buffer[BSIZE];
 		int count;
 		int8_t prev = 0;
 		while(count != 0)
 		{
-			//count = sf_read_double(s->sfile, buffer, BSIZE);
-			count = sf_read_raw(s->sfile, buffer, BSIZE * sizeof(uint8_t));
-			//write_delta_data(buffer,f->file, count);
+			count = sf_read_double(s->sfile, buffer, BSIZE);
 			prev = write_delta_data(buffer,f->file, count, prev);
 		}
-		//fwrite(&s.temp_buf, sizeof(int8_t), 100, f->file);
 		sf_close(s->sfile);
 
 }
@@ -564,7 +557,6 @@ void write_xm_file(xm_file *f)
 	write_pattern_data(f);
 	write_instrument_data(f);
 	fclose(f->file);
-	fclose(f->test_file);
 }
 
 int main()
@@ -576,9 +568,8 @@ int main()
 	init_xm_file(&file, &p);
 
 	int sine = add_instrument(&file);
-	xm_samp_params sparams = new_samp("pad8bit.wav");
+	xm_samp_params sparams = new_samp("brendan.wav");
 	add_samp(&file, &sparams, sine);
-	//sparams = new_samp("brendan.wav");
 	int note[] = {72, 74, 79, 83};
 	int i;
 
