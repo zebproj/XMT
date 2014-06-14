@@ -1,11 +1,20 @@
 default:
 
-xmt: xmt.c
-	gcc xmt.c -lsndfile -o xmt
+objects = xmt-base.o luaxmt.so
 
-sndfile-test: samplewrite.c
-	gcc samplewrite.c -o sndfile-test -lsndfile
-xmt-lua: xmt_lua.c
-	gcc -Wall -shared -fPIC -o soundpipe.so  \
-		-llua xmt_lua.c -lsndfile
+xmt-base.o: xmt-base.c xmt-base.h
+	#gcc xmt-base.c -lsndfile -o xmt
+	gcc xmt-base.c -c
 
+luaxmt.so: xmt-lua.c xmt-base.o
+	gcc -Wall -shared -fPIC -o luaxmt.so  \
+		-llua xmt-lua.c -lsndfile xmt-base.o
+
+testing: testing.c xmt-base.o
+	gcc testing.c xmt-base.o -lsndfile \
+		-o testing  
+
+all:
+	make ${objects}
+clean:
+	rm -rf ${objects}

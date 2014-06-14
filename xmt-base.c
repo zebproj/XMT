@@ -2,8 +2,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
-
 #include <sndfile.h>
+
+#include "xmt-base.h"
 /*TODO: add error handling to file I/O */
 
 #define AMIGA 0x0
@@ -22,49 +23,61 @@
 
 #define NOTEOFF 96
 
-typedef struct 
-{
-	char id_text[17];
-	char tracker_name[20];
-	char module_name[20];
-	char var;
-	uint16_t version;
-	uint32_t header_size;
-	uint16_t song_length;
-	uint16_t restart_position;
-	uint16_t num_channels;
-	uint16_t num_patterns;
-	uint16_t num_instruments;
-	uint16_t freq_table;
-	uint16_t speed;
-	uint16_t BPM;
-	uint8_t ptable[256];
-}
-xm_params;
+//typedef struct 
+//{
+//	char id_text[17];
+//	char tracker_name[20];
+//	char module_name[20];
+//	char var;
+//	uint16_t version;
+//	uint32_t header_size;
+//	uint16_t song_length;
+//	uint16_t restart_position;
+//	uint16_t num_channels;
+//	uint16_t num_patterns;
+//	uint16_t num_instruments;
+//	uint16_t freq_table;
+//	uint16_t speed;
+//	uint16_t BPM;
+//	uint8_t ptable[256];
+//}
+//xm_params;
+//
+//typedef struct
+//{
+//
+//}
+//xm_ins_params;
+//
+//typedef struct
+//{
+//	uint32_t length;
+//	uint32_t loop_start;
+//	uint32_t loop_length;
+//	uint8_t volume;
+//	int8_t finetune;
+//	uint8_t type;
+//	uint8_t panning;
+//	int8_t nn;
+//	int8_t reserved;	
+//	char sample_name[22];
+//	char *filename;
+//}
+//xm_samp_params;
+//
+//
+//typedef struct
+//{
+//	uint8_t pscheme;
+//	uint8_t note;
+//	uint8_t instrument;
+//	uint8_t volume;
+//	uint8_t fx;
+//	uint8_t fx_param;
+//}
+//xm_note;
 
-typedef struct
-{
-
-}
-xm_ins_params;
-
-typedef struct
-{
-	uint32_t length;
-	uint32_t loop_start;
-	uint32_t loop_length;
-	uint8_t volume;
-	int8_t finetune;
-	uint8_t type;
-	uint8_t panning;
-	int8_t nn;
-	int8_t reserved;	
-	char sample_name[22];
-	char *filename;
-}
-xm_samp_params;
-
-xm_samp_params new_samp(char *filename)
+xm_samp_params new_samp(const char *filename)
 {
 	xm_samp_params s;
 	s.volume = 0x40;
@@ -75,18 +88,6 @@ xm_samp_params new_samp(char *filename)
 	s.filename = filename;
 	return s;
 }
-
-typedef struct
-{
-	uint8_t pscheme;
-	uint8_t note;
-	uint8_t instrument;
-	uint8_t volume;
-	uint8_t fx;
-	uint8_t fx_param;
-}
-xm_note;
-
 xm_note make_note(
 		uint8_t note,
 		uint8_t ins,
@@ -98,7 +99,7 @@ xm_note make_note(
 	n.pscheme = 0x80;
 	if(note != 0){
 		n.pscheme = n.pscheme | NOTE;
-		n.note = note + 1;
+		n.note = (note + 1) - 12;
 	}
 	if(ins != 0){
 		n.pscheme = n.pscheme | INSTRUMENT;
@@ -140,100 +141,100 @@ void write_note(FILE *f, xm_note *n)
 		fwrite(&n->fx_param, sizeof(uint8_t), 1, f);
 }
 
-typedef struct
-{
-	uint32_t header_size;
-	uint8_t packing_type;
-	uint16_t num_rows; 
-	uint16_t num_channels;
-	uint16_t data_size;
-	//uint8_t *data;
-	xm_note *data;
-}
-xm_pat;
-
-typedef struct
-{
-	uint16_t x, y;
-}point;
-
-typedef struct
-{
-	uint32_t length;
-	uint32_t loop_start;
-	uint32_t loop_length;
-	uint8_t volume;
-	int8_t finetune;
-	uint8_t type;
-	uint8_t panning;
-	int8_t nn;
-	int8_t reserved;	
-	char sample_name[22];
-	char *filename;
-	/*precursor to using libsndfile to embed samples*/
-	//int8_t temp_buf[100];
-	SNDFILE *sfile;
-}
-xm_sample;
-
-typedef struct 
-{
-	uint32_t size;
-	char name[22];
-	uint8_t type;
-	uint16_t num_samples;
-
-	/*if num_samples > 0, these become important */
-	uint32_t sample_header_size;
-	uint8_t sample_map[96];
-	point volume_points[12];
-	point envelope_points[12];
-
-	uint8_t num_volume_points;
-	uint8_t num_envelope_points;
-	uint8_t vol_sustain;
-	uint8_t vol_loop_start;
-	uint8_t vol_loop_end;
-	uint8_t pan_sustain;
-	uint8_t pan_loop_start;
-	uint8_t pan_loop_end;
-	uint8_t vol_type;
-	uint8_t pan_type;
-	uint8_t vib_type;
-	uint8_t vib_sweep;
-	uint8_t vib_depth;
-	uint8_t vib_rate;
-	uint16_t vol_fadeout;
-	/*reserved 11-byte thing here(?)*/
-	uint16_t reserved[11];
-
-	xm_sample sample[16];
-}
-xm_ins;
-
-typedef struct
-{
-	FILE *file;
-	char id_text[17];
-	char tracker_name[20];
-	char module_name[20];
-	char var;
-	uint16_t version;
-	uint32_t header_size;
-	uint16_t song_length;
-	uint16_t restart_position;
-	uint16_t num_channels;
-	uint16_t num_patterns;
-	uint16_t num_instruments;
-	uint16_t freq_table;
-	uint16_t speed;
-	uint16_t BPM;
-	uint8_t ptable[256];
-
-	xm_pat pat[256];
-	xm_ins ins[256];
-}
-xm_file;
+//typedef struct
+//{
+//	uint32_t header_size;
+//	uint8_t packing_type;
+//	uint16_t num_rows; 
+//	uint16_t num_channels;
+//	uint16_t data_size;
+//	//uint8_t *data;
+//	xm_note *data;
+//}
+//xm_pat;
+//
+//typedef struct
+//{
+//	uint16_t x, y;
+//}point;
+//
+//typedef struct
+//{
+//	uint32_t length;
+//	uint32_t loop_start;
+//	uint32_t loop_length;
+//	uint8_t volume;
+//	int8_t finetune;
+//	uint8_t type;
+//	uint8_t panning;
+//	int8_t nn;
+//	int8_t reserved;	
+//	char sample_name[22];
+//	char *filename;
+//	/*precursor to using libsndfile to embed samples*/
+//	//int8_t temp_buf[100];
+//	SNDFILE *sfile;
+//}
+//xm_sample;
+//
+//typedef struct 
+//{
+//	uint32_t size;
+//	char name[22];
+//	uint8_t type;
+//	uint16_t num_samples;
+//
+//	/*if num_samples > 0, these become important */
+//	uint32_t sample_header_size;
+//	uint8_t sample_map[96];
+//	point volume_points[12];
+//	point envelope_points[12];
+//
+//	uint8_t num_volume_points;
+//	uint8_t num_envelope_points;
+//	uint8_t vol_sustain;
+//	uint8_t vol_loop_start;
+//	uint8_t vol_loop_end;
+//	uint8_t pan_sustain;
+//	uint8_t pan_loop_start;
+//	uint8_t pan_loop_end;
+//	uint8_t vol_type;
+//	uint8_t pan_type;
+//	uint8_t vib_type;
+//	uint8_t vib_sweep;
+//	uint8_t vib_depth;
+//	uint8_t vib_rate;
+//	uint16_t vol_fadeout;
+//	/*reserved 11-byte thing here(?)*/
+//	uint16_t reserved[11];
+//
+//	xm_sample sample[16];
+//}
+//xm_ins;
+//
+//typedef struct
+//{
+//	FILE *file;
+//	char id_text[17];
+//	char tracker_name[20];
+//	char module_name[20];
+//	char var;
+//	uint16_t version;
+//	uint32_t header_size;
+//	uint16_t song_length;
+//	uint16_t restart_position;
+//	uint16_t num_channels;
+//	uint16_t num_patterns;
+//	uint16_t num_instruments;
+//	uint16_t freq_table;
+//	uint16_t speed;
+//	uint16_t BPM;
+//	uint8_t ptable[256];
+//
+//	xm_pat pat[256];
+//	xm_ins ins[256];
+//}
+//xm_file;
 
 int8_t scale_8(double s){
 	return (uint8_t)(s * 0x7f);
@@ -394,13 +395,14 @@ void init_xm_sample(xm_sample *s, xm_samp_params *param)
 	s->panning = param->panning;
 	s->nn = param->nn;
 	s->reserved = 0;
+    s->nchnls = info.channels;
 	memset(s->sample_name, 0, sizeof(char) * 22);
 	//memset(s->temp_buf, 0, sizeof(char) * 100);
 	//strcpy(s->sample_name, "test sample");
 }
 
 void init_xm_file(xm_file *f, xm_params *p){
-	f->file = fopen("test.xm", "wb");
+	//f->file = fopen("test.xm", "wb");
 	memset(f->id_text, 0x0, sizeof(char) * 17);
 	sprintf(f->id_text, "Extended Module:");
 	memset(f->module_name, 0x0, sizeof(char) * 20);
@@ -530,7 +532,6 @@ void write_instrument_data(xm_file *f)
 			write_sample_data(f, i);
 		}
 	}
-
 }
 
 void write_header_data(xm_file *f){
@@ -551,14 +552,16 @@ void write_header_data(xm_file *f){
 	fwrite(f->ptable, sizeof(uint8_t), 256, f->file);
 }
 
-void write_xm_file(xm_file *f)
+void write_xm_file(xm_file *f, const char *filename)
 {
+	f->file = fopen(filename, "wb");
 	write_header_data(f);
 	write_pattern_data(f);
 	write_instrument_data(f);
 	fclose(f->file);
 }
 
+/*
 int main()
 {
 	xm_params p; 
@@ -583,3 +586,4 @@ int main()
 
 	return 0;
 }
+*/
