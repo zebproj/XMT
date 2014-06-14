@@ -52,7 +52,7 @@ typedef struct
 	int8_t nn;
 	int8_t reserved;	
 	char sample_name[22];
-	char *filename;
+	const char *filename;
 }
 xm_samp_params;
 
@@ -97,7 +97,7 @@ typedef struct
     int8_t nn;
     int8_t reserved;    
     char sample_name[22];
-    char *filename;
+    const char *filename;
     SNDFILE *sfile;
     int nchnls;
 }

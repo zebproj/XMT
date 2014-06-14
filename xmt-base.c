@@ -97,23 +97,24 @@ xm_note make_note(
 {
 	xm_note n;
 	n.pscheme = 0x80;
-	if(note != 0){
+    n.volume = 0;
+	if(note != -1){
 		n.pscheme = n.pscheme | NOTE;
 		n.note = (note + 1) - 12;
 	}
-	if(ins != 0){
+	if(ins != -1){
 		n.pscheme = n.pscheme | INSTRUMENT;
 		n.instrument = ins;
 	}
-	if(vol != 0){
+	if(vol != -1){
 		n.pscheme = n.pscheme | VOLUME;
 		n.volume = vol;
 	}
-	if(fx != 0){
+	if(fx != -1){
 		n.pscheme = n.pscheme | FX;
 		n.fx = fx;
 	}
-	if(param != 0){
+	if(param != -1){
 		n.pscheme = n.pscheme | PARAM;
 		n.fx_param = param;
 	}
@@ -396,6 +397,7 @@ void init_xm_sample(xm_sample *s, xm_samp_params *param)
 	s->nn = param->nn;
 	s->reserved = 0;
     s->nchnls = info.channels;
+    printf("the number of channels is %ld \n", info.channels);
 	memset(s->sample_name, 0, sizeof(char) * 22);
 	//memset(s->temp_buf, 0, sizeof(char) * 100);
 	//strcpy(s->sample_name, "test sample");
@@ -494,7 +496,6 @@ void write_sample_data(xm_file *f, int insnum)
 			prev = write_delta_data(buffer,f->file, count, prev);
 		}
 		sf_close(s->sfile);
-
 }
 
 void write_instrument_data(xm_file *f)
