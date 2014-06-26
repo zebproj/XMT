@@ -3,7 +3,7 @@ require("luaxmt")
 XMT = {}
 
 function makenote(nn, ins, vol, fx, param)
-    return {nn = nn or -1, ins = ins or -1, vol = vol or 0, 
+    return {nn = nn or -1, ins = ins or -1, vol = vol or -1, 
     fx = fx or -1, param = param or -1}
 end
 
@@ -42,6 +42,5 @@ x = XMT:create()
 ins1 = x:addins()
 print(ins1)
 x:addsample(ins1, "samples/pad8bit8khz.wav")
---TODO: figure out why this has to be 0 and not -1
-x:addnote(0, 0, 0, makenote(60, 1, 0, -1, -1))
+x:addnote(0, 0, 0, makenote(60, 1))
 x:write("out.xm")

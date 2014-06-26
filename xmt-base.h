@@ -170,10 +170,10 @@ xm_samp_params new_samp(const char *filename);
 int add_instrument(xm_file *f);
 void write_xm_file(xm_file *f, const char *filename);
 xm_note make_note(
-		uint8_t note,
-		uint8_t ins,
-		uint8_t vol,
-		uint8_t fx,
-		uint8_t param);
+		int note,
+		int ins,
+		int vol,
+		int fx,
+		int param);
 void add_note(xm_file *f, uint8_t patnum, uint8_t chan, 
         uint8_t row, xm_note note);

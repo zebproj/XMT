@@ -15,11 +15,11 @@ int fx,
 int param)
 {
     xm_note tmp = make_note(
-    (uint8_t) note,
-    (uint8_t) ins,
-    (uint8_t) vol,
-    (uint8_t) fx,
-    (uint8_t) param);
+    note,
+    ins,
+    vol,
+    fx,
+    param);
     *n = tmp;
 }
 
@@ -56,11 +56,11 @@ static int L_write(lua_State *L)
 
 static int L_makenote(lua_State *L)
 {   
-    int note = lua_tonumber(L, 1);
-    int ins = lua_tonumber(L, 2);
-    int vol = lua_tonumber(L, 3);
-    int fx = lua_tonumber(L, 4);
-    int param = lua_tonumber(L, 5);
+    int note = lua_tointeger(L, 1);
+    int ins = lua_tointeger(L, 2);
+    int vol = lua_tointeger(L, 3);
+    int fx = lua_tointeger(L, 4);
+    int param = lua_tointeger(L, 5);
     xm_note *n = (xm_note *)lua_newuserdata(L, sizeof(xm_note));
     make_note_wrapper(n, note, ins, vol, fx, param);
     return 1;

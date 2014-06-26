@@ -89,15 +89,16 @@ xm_samp_params new_samp(const char *filename)
 	return s;
 }
 xm_note make_note(
-		uint8_t note,
-		uint8_t ins,
-		uint8_t vol,
-		uint8_t fx,
-		uint8_t param)
+		int note,
+		int ins,
+		int vol,
+		int fx,
+		int param)
 {
 	xm_note n;
 	n.pscheme = 0x80;
-    n.volume = 0;
+    //vol = (vol == -1) ? 0 : vol;
+
 	if(note != -1){
 		n.pscheme = n.pscheme | NOTE;
 		n.note = (note + 1) - 12;
@@ -397,7 +398,6 @@ void init_xm_sample(xm_sample *s, xm_samp_params *param)
 	s->nn = param->nn;
 	s->reserved = 0;
     s->nchnls = info.channels;
-    printf("the number of channels is %ld \n", info.channels);
 	memset(s->sample_name, 0, sizeof(char) * 22);
 	//memset(s->temp_buf, 0, sizeof(char) * 100);
 	//strcpy(s->sample_name, "test sample");
