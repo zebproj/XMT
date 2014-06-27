@@ -207,8 +207,8 @@ void init_xm_pat(xm_file *f)
 
 void init_xm_ins(xm_file *f, xm_ins *i)
 {
-	//i->size = 0x1d;
-	i->size = 0x107;
+	i->size = 0x1d;
+	//i->size = 0x107;
 	memset(i->name, 0, sizeof(char) * 22);
 	i->type = 0; 
 	i->num_samples = 0;
@@ -245,17 +245,17 @@ void init_xm_params(xm_params *p)
 	sprintf(p->id_text, "Extended Module:");
 	memset(p->module_name, ' ', sizeof(char) * 20);
 	sprintf(p->module_name, "Test Module");
-	memset(p->tracker_name, ' ', sizeof(char) * 20);
-	//sprintf(p->tracker_name, "Milkytracker");
-	sprintf(p->tracker_name, "FastTracker v2.00  ");
+	memset(p->tracker_name, 0x20, sizeof(char) * 20);
+	sprintf(p->tracker_name, "Milkytracker  ");
+	//sprintf(p->tracker_name, "FastTracker v2.00  ");
 	p->var = 0x1a;
 	p->version = 0x0104;
 	p->header_size = 0x114;
 	p->song_length = 0x01;
 	p->restart_position = 0x00;
 	p->num_channels = 0x08;
-	p->num_patterns= 0x00;
-	p->num_instruments= 0x00;
+	p->num_patterns= 0x01;
+	p->num_instruments= 0x99;
 	p->freq_table = LINEAR;
 	p->speed = 6;
 	p->BPM = 125;
@@ -328,8 +328,10 @@ int add_pattern(xm_file *f){
 
 int add_instrument(xm_file *f)
 {
-	f->num_instruments++; 
+    if(f->num_instruments == 0x99) f->num_instruments = 0x01;
+    else f->num_instruments++; 
 	int n = f->num_instruments;
+    printf("the number of instruments is %d\n", n);
 	init_xm_ins(f, &f->ins[n - 1]);
 	return n - 1;
 }
@@ -448,7 +450,9 @@ void write_header_data(xm_file *f){
 	fwrite(&f->restart_position, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->num_channels, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->num_patterns, sizeof(uint16_t), 1, f->file);
+	printf("the number of patterns is %d\n", f->num_patterns);
 	fwrite(&f->num_instruments, sizeof(uint16_t), 1, f->file);
+	printf("the number of instruments is %d\n", f->num_instruments);
 	fwrite(&f->freq_table, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->speed, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->BPM, sizeof(uint16_t), 1, f->file);
