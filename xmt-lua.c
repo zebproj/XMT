@@ -6,6 +6,11 @@
 
 #include "xmt-base.h"
 
+typedef struct {
+    const char *name;
+    int (*func)(lua_State *L);
+}LEntry;
+
 void make_note_wrapper(
 xm_note *n, 
 int note,
@@ -33,13 +38,19 @@ static int L_hello(lua_State *L)
     printf("hello world!\n");
 	return 1;
 }
-
+static int L_init_xm_params(lua_State *L)
+{
+    xm_params *p = (xm_params *)lua_newuserdata(L, sizeof(xm_params));
+    init_xm_params(p);
+    return 1;
+}
 static int L_new(lua_State *L)
 {
-    xm_params p;
     xm_file *file = (xm_file *)lua_newuserdata(L, sizeof(xm_file));
-    init_xm_params(&p);
-    init_xm_file(file, &p); 
+    xm_params *p = (xm_params *)lua_touserdata(L, 1);
+    //xm_params p;
+    //init_xm_params(&p);
+    init_xm_file(file, p); 
     return 1;
 }
 
@@ -101,9 +112,6 @@ static int L_addbuffer(lua_State *L)
     int size = lua_tointeger(L, 3);
     double buffer[size];
 
-    //lua_getfield(L, 4, "1");
-
-    //printf("%d\n", lua_tointeger(L, -1));
     int c;
     for(c = 1; c <= size; c++)
     {
@@ -111,21 +119,72 @@ static int L_addbuffer(lua_State *L)
         lua_gettable(L, 4);
         buffer[c - 1] = lua_tonumber(L, -1);
     }
-        printf("\n");
 
     xm_samp_params sparams = new_buf(buffer,size);
     add_samp(f, &sparams, ins);
     return 1;
 }
 
+static int L_transpose(lua_State *L)
+{
+    xm_file *f = (xm_file *)lua_touserdata(L, 1);
+    int ins = lua_tointeger(L, 2);
+    int samp = lua_tointeger(L, 3);
+    int nn = lua_tointeger(L, 4);
+    int fine = lua_tointeger(L, 5);
+    xm_transpose_sample(f, ins, samp, nn, fine);
+    return 1;
+}
+
+static int L_update_ptable(lua_State *L)
+{
+    xm_file *f = (xm_file *)lua_touserdata(L, 1);
+    int pos = lua_tointeger(L, 2);
+    int pnum = lua_tointeger(L, 3);
+    update_ptable(f, pos, pnum);
+    return 1;
+}
+static int L_set_loop_mode(lua_State *L)
+{
+    xm_file *f = (xm_file *)lua_touserdata(L, 1);
+    int ins = lua_tointeger(L, 2);
+    int samp = lua_tointeger(L, 3);
+    int mode = lua_tointeger(L, 4);
+    xm_set_loop_mode(f, ins, samp, mode);
+    return 1;
+}
+
+static int L_set_nchan(lua_State *L)
+{
+    xm_params *p = (xm_params *)lua_touserdata(L, 1);
+    int nchan = lua_tointeger(L, 2);
+    xm_set_nchan(p, nchan);
+    return 1 ;
+}
+
+static LEntry entry[] = {
+    {"hello", L_hello},
+    {"xm_write", L_write},
+	{"xm_init_xm_params", L_init_xm_params},
+	{"xm_new", L_new},
+	{"xm_makenote", L_makenote},
+	{"xm_addnote", L_addnote},
+	{"xm_addinstrument", L_addinstrument},
+	{"xm_addsample", L_addsample},
+	{"xm_addbuffer", L_addbuffer},
+	{"xm_transpose", L_transpose},
+	{"xm_update_ptable", L_update_ptable},
+	{"xm_set_loop_mode", L_set_loop_mode},
+	{"xm_set_nchan", L_set_nchan},
+    {NULL, NULL}
+};
+
 int luaopen_luaxmt(lua_State *L){
-	lua_register(L, "hello", L_hello);
-	lua_register(L, "xm_write", L_write);
-	lua_register(L, "xm_new", L_new);
-	lua_register(L, "xm_makenote", L_makenote);
-	lua_register(L, "xm_addnote", L_addnote);
-	lua_register(L, "xm_addinstrument", L_addinstrument);
-	lua_register(L, "xm_addsample", L_addsample);
-	lua_register(L, "xm_addbuffer", L_addbuffer);
+    int i = 0;
+    while(entry[i].name!= NULL)
+    {
+	    lua_register(L, entry[i].name, entry[i].func);
+        i++;
+    }
 	return 0;
 }

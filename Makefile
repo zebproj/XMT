@@ -1,5 +1,5 @@
 default:
-
+	make all
 objects = xmt-base.o luaxmt.so
 
 xmt-base.o: xmt-base.c xmt-base.h

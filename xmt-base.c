@@ -52,6 +52,17 @@ xm_samp_params new_buf(double *buf, int size)
     }
 	return s;
 }
+void xm_transpose_sample(xm_file *f, uint8_t ins, uint8_t sample, 
+        uint8_t nn, uint8_t fine)
+{
+    f->ins[ins].sample[sample].nn = nn;
+    f->ins[ins].sample[sample].finetune = fine;
+}
+
+void xm_set_loop_mode(xm_file *f, uint8_t ins, uint8_t sample, uint8_t mode)
+{
+    f->ins[ins].sample[sample].type = mode;
+}
 xm_note make_note(
 		int note,
 		int ins,
@@ -86,11 +97,6 @@ xm_note make_note(
 	return n;
 }
 
-void init_note(xm_params *p)
-{
-	
-}
-
 void write_note(FILE *f, xm_note *n)
 {
 	fwrite(&n->pscheme, sizeof(uint8_t), 1, f);
@@ -106,106 +112,10 @@ void write_note(FILE *f, xm_note *n)
 		fwrite(&n->fx_param, sizeof(uint8_t), 1, f);
 }
 
-//typedef struct
-//{
-//	uint32_t header_size;
-//	uint8_t packing_type;
-//	uint16_t num_rows; 
-//	uint16_t num_channels;
-//	uint16_t data_size;
-//	//uint8_t *data;
-//	xm_note *data;
-//}
-//xm_pat;
-//
-//typedef struct
-//{
-//	uint16_t x, y;
-//}point;
-//
-//typedef struct
-//{
-//	uint32_t length;
-//	uint32_t loop_start;
-//	uint32_t loop_length;
-//	uint8_t volume;
-//	int8_t finetune;
-//	uint8_t type;
-//	uint8_t panning;
-//	int8_t nn;
-//	int8_t reserved;	
-//	char sample_name[22];
-//	char *filename;
-//	/*precursor to using libsndfile to embed samples*/
-//	//int8_t temp_buf[100];
-//	SNDFILE *sfile;
-//}
-//xm_sample;
-//
-//typedef struct 
-//{
-//	uint32_t size;
-//	char name[22];
-//	uint8_t type;
-//	uint16_t num_samples;
-//
-//	/*if num_samples > 0, these become important */
-//	uint32_t sample_header_size;
-//	uint8_t sample_map[96];
-//	point volume_points[12];
-//	point envelope_points[12];
-//
-//	uint8_t num_volume_points;
-//	uint8_t num_envelope_points;
-//	uint8_t vol_sustain;
-//	uint8_t vol_loop_start;
-//	uint8_t vol_loop_end;
-//	uint8_t pan_sustain;
-//	uint8_t pan_loop_start;
-//	uint8_t pan_loop_end;
-//	uint8_t vol_type;
-//	uint8_t pan_type;
-//	uint8_t vib_type;
-//	uint8_t vib_sweep;
-//	uint8_t vib_depth;
-//	uint8_t vib_rate;
-//	uint16_t vol_fadeout;
-//	/*reserved 11-byte thing here(?)*/
-//	uint16_t reserved[11];
-//
-//	xm_sample sample[16];
-//}
-//xm_ins;
-//
-//typedef struct
-//{
-//	FILE *file;
-//	char id_text[17];
-//	char tracker_name[20];
-//	char module_name[20];
-//	char var;
-//	uint16_t version;
-//	uint32_t header_size;
-//	uint16_t song_length;
-//	uint16_t restart_position;
-//	uint16_t num_channels;
-//	uint16_t num_patterns;
-//	uint16_t num_instruments;
-//	uint16_t freq_table;
-//	uint16_t speed;
-//	uint16_t BPM;
-//	uint8_t ptable[256];
-//
-//	xm_pat pat[256];
-//	xm_ins ins[256];
-//}
-//xm_file;
-
 int8_t scale_8(double s){
 	return -(uint8_t)(s * 0x7f);
 }
 
-//int8_t write_delta_data(uint8_t *buffer, FILE *out, int count, int8_t prev)
 int8_t write_delta_data(double *buffer, FILE *out, int count, int8_t prev)
 {
 	int8_t delta_buffer[count];
@@ -233,8 +143,8 @@ void add_note(	xm_file *f,
 {	
 	if((patnum + 1)> f->num_patterns) f->num_patterns = (patnum + 1);
 	xm_pat *p = &f->pat[patnum];
-	/* limit varibles */
-	//row = row % (p->num_rows);
+    /*remove previous note */
+    remove_note(f, patnum, chan, row);
 	if(note.pscheme & NOTE) p->data_size++;
 	if(note.pscheme & INSTRUMENT) p->data_size++;
 	if(note.pscheme & VOLUME) p->data_size++;
@@ -243,14 +153,24 @@ void add_note(	xm_file *f,
 	p->data[(row * p->num_channels) + chan ] = note;
 
 }
+void remove_note(xm_file *f, uint8_t patnum, uint8_t chan, uint8_t row)
+{	
+	if((patnum + 1)> f->num_patterns) f->num_patterns = (patnum + 1);
+	xm_pat *p = &f->pat[patnum];
+    xm_note *note = &p->data[(row * p->num_channels) + chan ];
+	if(note->pscheme & NOTE) p->data_size--;
+	if(note->pscheme & INSTRUMENT) p->data_size--;
+	if(note->pscheme & VOLUME) p->data_size--;
+	if(note->pscheme & FX) p->data_size--;
+	if(note->pscheme & PARAM) p->data_size--;
+}
 
 
-void set_BPM(xm_file *f, uint8_t bpm) 
+void xm_set_BPM(xm_file *f, uint8_t bpm) 
 {
 	f->BPM =  bpm;
 }
-//TODO fix this implementation
-void set_nchan(xm_params *p, uint8_t n)
+void xm_set_nchan(xm_params *p, uint8_t n)
 {
 	if(n % 2 == 0)	
 	p->num_channels = n;
@@ -258,16 +178,9 @@ void set_nchan(xm_params *p, uint8_t n)
 	p->num_channels = n + 1;
 	
 }
-void set_speed(xm_file *f, uint8_t speed) 
+void xm_set_speed(xm_file *f, uint8_t speed) 
 {	
 	f->speed = speed;
-}
-
-void remove_note(	xm_pat *p, 
-					uint8_t row,
-					uint8_t chan)
-{
-
 }
 
 void init_xm_pat(xm_file *f)
@@ -328,19 +241,20 @@ void init_xm_ins(xm_file *f, xm_ins *i)
 
 void init_xm_params(xm_params *p)
 {
-	memset(p->id_text, 0x0, sizeof(char) * 17);
+	memset(p->id_text, 0x20, sizeof(char) * 17);
 	sprintf(p->id_text, "Extended Module:");
-	memset(p->module_name, 0x0, sizeof(char) * 20);
+	memset(p->module_name, ' ', sizeof(char) * 20);
 	sprintf(p->module_name, "Test Module");
 	memset(p->tracker_name, ' ', sizeof(char) * 20);
-	sprintf(p->tracker_name, "Milkytracker");
+	//sprintf(p->tracker_name, "Milkytracker");
+	sprintf(p->tracker_name, "FastTracker v2.00  ");
 	p->var = 0x1a;
 	p->version = 0x0104;
 	p->header_size = 0x114;
 	p->song_length = 0x01;
 	p->restart_position = 0x00;
 	p->num_channels = 0x08;
-	p->num_patterns= 0x01;
+	p->num_patterns= 0x00;
 	p->num_instruments= 0x00;
 	p->freq_table = LINEAR;
 	p->speed = 6;
@@ -380,12 +294,12 @@ void init_xm_sample(xm_sample *s, xm_samp_params *param)
 
 void init_xm_file(xm_file *f, xm_params *p){
 	//f->file = fopen("test.xm", "wb");
-	memset(f->id_text, 0x0, sizeof(char) * 17);
-	sprintf(f->id_text, "Extended Module:");
+	memset(f->id_text, 0x20, sizeof(char) * 17);
+	sprintf(f->id_text, "Extended Module: ");
 	memset(f->module_name, 0x0, sizeof(char) * 20);
 	sprintf(f->module_name, "Test Module");
 	memset(f->tracker_name, ' ', sizeof(char) * 20);
-	sprintf(f->tracker_name, "Milkytracker");
+	sprintf(f->tracker_name, p->tracker_name);
 	f->var = p->var;
 	f->version = p->version;
 	f->header_size = p->header_size;
@@ -404,6 +318,7 @@ void init_xm_file(xm_file *f, xm_params *p){
 }
 
 void update_ptable(xm_file *f, uint8_t pos, uint8_t pnum){
+	//if((pos + 1) > f->song_length) f->song_length = pos + 1;
 	if((pos + 1) > f->song_length) f->song_length = pos + 1;
 	f->ptable[pos] = pnum;	
 }
@@ -413,7 +328,7 @@ int add_pattern(xm_file *f){
 
 int add_instrument(xm_file *f)
 {
-	f->num_instruments++;
+	f->num_instruments++; 
 	int n = f->num_instruments;
 	init_xm_ins(f, &f->ins[n - 1]);
 	return n - 1;
