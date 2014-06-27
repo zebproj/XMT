@@ -94,6 +94,29 @@ static int L_addsample(lua_State *L)
     add_samp(f, &sparams, ins);
     return 1;
 }
+static int L_addbuffer(lua_State *L)
+{
+    xm_file *f = (xm_file *)lua_touserdata(L, 1);
+    int ins = lua_tonumber(L, 2);
+    int size = lua_tointeger(L, 3);
+    double buffer[size];
+
+    //lua_getfield(L, 4, "1");
+
+    //printf("%d\n", lua_tointeger(L, -1));
+    int c;
+    for(c = 1; c <= size; c++)
+    {
+        lua_pushnumber(L, c);
+        lua_gettable(L, 4);
+        buffer[c - 1] = lua_tonumber(L, -1);
+    }
+        printf("\n");
+
+    xm_samp_params sparams = new_buf(buffer,size);
+    add_samp(f, &sparams, ins);
+    return 1;
+}
 
 int luaopen_luaxmt(lua_State *L){
 	lua_register(L, "hello", L_hello);
@@ -103,5 +126,6 @@ int luaopen_luaxmt(lua_State *L){
 	lua_register(L, "xm_addnote", L_addnote);
 	lua_register(L, "xm_addinstrument", L_addinstrument);
 	lua_register(L, "xm_addsample", L_addsample);
+	lua_register(L, "xm_addbuffer", L_addbuffer);
 	return 0;
 }

@@ -1,0 +1,6 @@
+strings.lua:--TODO:really fucked up instrument problem... not sure why I have to change make_note
+strings.lua:--TODO:function only
+strings.lua:--TODO: why can't buffer length be more than 80?
+xmt-base.c:/*TODO: add error handling to file I/O */
+xmt-base.c://TODO fix this implementation
+xmt-base.c:    //TODO-- figure out how to free buffer data

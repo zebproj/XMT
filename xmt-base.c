@@ -23,61 +23,19 @@
 
 #define NOTEOFF 96
 
-//typedef struct 
-//{
-//	char id_text[17];
-//	char tracker_name[20];
-//	char module_name[20];
-//	char var;
-//	uint16_t version;
-//	uint32_t header_size;
-//	uint16_t song_length;
-//	uint16_t restart_position;
-//	uint16_t num_channels;
-//	uint16_t num_patterns;
-//	uint16_t num_instruments;
-//	uint16_t freq_table;
-//	uint16_t speed;
-//	uint16_t BPM;
-//	uint8_t ptable[256];
-//}
-//xm_params;
-//
-//typedef struct
-//{
-//
-//}
-//xm_ins_params;
-//
-//typedef struct
-//{
-//	uint32_t length;
-//	uint32_t loop_start;
-//	uint32_t loop_length;
-//	uint8_t volume;
-//	int8_t finetune;
-//	uint8_t type;
-//	uint8_t panning;
-//	int8_t nn;
-//	int8_t reserved;	
-//	char sample_name[22];
-//	char *filename;
-//}
-//xm_samp_params;
-//
-//
-//typedef struct
-//{
-//	uint8_t pscheme;
-//	uint8_t note;
-//	uint8_t instrument;
-//	uint8_t volume;
-//	uint8_t fx;
-//	uint8_t fx_param;
-//}
-//xm_note;
-
 xm_samp_params new_samp(const char *filename)
+{
+	xm_samp_params s;
+	s.volume = 0x40;
+	s.finetune = 0;
+	s.type = NO_LOOP;
+	s.panning = 0x80;
+	s.nn = 0;
+	s.filename = filename;
+    s.samptype = 0;
+	return s;
+}
+xm_samp_params new_buf(double *buf, int size)
 {
 	xm_samp_params s;
 	s.volume = 0x40;
@@ -85,7 +43,13 @@ xm_samp_params new_samp(const char *filename)
 	s.type = FORWARD_LOOP;
 	s.panning = 0x80;
 	s.nn = 0;
-	s.filename = filename;
+    s.samptype = 1;
+    s.samplen = size;
+    s.buf = (double *) malloc(size * sizeof(double));
+    int i;
+    for(i = 0; i < size; i++){
+        s.buf[i] = buf[i];
+    }
 	return s;
 }
 xm_note make_note(
@@ -97,7 +61,6 @@ xm_note make_note(
 {
 	xm_note n;
 	n.pscheme = 0x80;
-    //vol = (vol == -1) ? 0 : vol;
 
 	if(note != -1){
 		n.pscheme = n.pscheme | NOTE;
@@ -105,7 +68,7 @@ xm_note make_note(
 	}
 	if(ins != -1){
 		n.pscheme = n.pscheme | INSTRUMENT;
-		n.instrument = ins;
+		n.instrument = ins + 1;
 	}
 	if(vol != -1){
 		n.pscheme = n.pscheme | VOLUME;
@@ -239,7 +202,7 @@ void write_note(FILE *f, xm_note *n)
 //xm_file;
 
 int8_t scale_8(double s){
-	return (uint8_t)(s * 0x7f);
+	return -(uint8_t)(s * 0x7f);
 }
 
 //int8_t write_delta_data(uint8_t *buffer, FILE *out, int count, int8_t prev)
@@ -387,8 +350,18 @@ void init_xm_params(xm_params *p)
 void init_xm_sample(xm_sample *s, xm_samp_params *param)
 {
 	SF_INFO info;
-	s->sfile = sf_open(param->filename, SFM_READ, &info);
-	s->length = info.frames;
+    s->samptype = param->samptype;
+    if(s->samptype == 1) {
+        s->length = param->samplen;
+        s->sampbuf = (double *)malloc(sizeof(double) * s->length);
+        memset(s->sampbuf, 0, sizeof(double) * s->length);
+        int i;
+        for(i = 0; i < s->length; i++)
+            s->sampbuf[i] = param->buf[i];
+    }else if(s->samptype == 0){
+	    s->sfile = sf_open(param->filename, SFM_READ, &info);
+        s->length = info.frames;
+    }
 	s->loop_start = 0;
 	s->loop_length= s->length;
 	s->volume = param->volume;
@@ -401,6 +374,8 @@ void init_xm_sample(xm_sample *s, xm_samp_params *param)
 	memset(s->sample_name, 0, sizeof(char) * 22);
 	//memset(s->temp_buf, 0, sizeof(char) * 100);
 	//strcpy(s->sample_name, "test sample");
+    //TODO-- figure out how to free buffer data
+    if(s->samptype == 1) free(param->buf);
 }
 
 void init_xm_file(xm_file *f, xm_params *p){
@@ -490,12 +465,24 @@ void write_sample_data(xm_file *f, int insnum)
         double buffer[BSIZE];
 		int count;
 		int8_t prev = 0;
-		while(count != 0)
-		{
-			count = sf_read_double(s->sfile, buffer, BSIZE);
-			prev = write_delta_data(buffer,f->file, count, prev);
-		}
-		sf_close(s->sfile);
+        
+        if(s->samptype == 0 ){
+            while(count != 0)
+            {
+                count = sf_read_double(s->sfile, buffer, BSIZE);
+                prev = write_delta_data(buffer,f->file, count, prev);
+            }
+            sf_close(s->sfile);
+        }else if(s->samptype == 1){
+            int i;
+            write_delta_data(s->sampbuf, f->file, s->length, prev);
+        }
+        //while(count != 0)
+        //{
+        //    count = sf_read_double(s->sfile, buffer, BSIZE);
+        //    prev = write_delta_data(buffer,f->file, count, prev);
+        //}
+        //sf_close(s->sfile);
 }
 
 void write_instrument_data(xm_file *f)

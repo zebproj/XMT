@@ -53,6 +53,9 @@ typedef struct
 	int8_t reserved;	
 	char sample_name[22];
 	const char *filename;
+    int samptype;
+    int samplen;
+    double *buf;
 }
 xm_samp_params;
 
@@ -100,6 +103,8 @@ typedef struct
     const char *filename;
     SNDFILE *sfile;
     int nchnls;
+    double *sampbuf;
+    int samptype;
 }
 xm_sample;
 
@@ -167,6 +172,7 @@ void set_nchan(xm_params *p, uint8_t n);
 void init_xm_file(xm_file *f, xm_params *p);
 long add_samp(xm_file *f, xm_samp_params *s, uint8_t ins);
 xm_samp_params new_samp(const char *filename);
+xm_samp_params new_buf(double *buf, int size);
 int add_instrument(xm_file *f);
 void write_xm_file(xm_file *f, const char *filename);
 xm_note make_note(

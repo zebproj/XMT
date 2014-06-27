@@ -28,6 +28,10 @@ function XMT:addsample(ins, file)
     xm_addsample(self.xm, ins, file)
 end
 
+function XMT:addbuffer(ins, buf)
+    xm_addbuffer(self.xm, ins, #buf, buf)
+end
+
 function XMT:write(filename)
     xm_write(self.xm, filename)
 end
@@ -38,9 +42,3 @@ end
 --xm_write(xm, "out.xm")
 --
 
-x = XMT:create()
-ins1 = x:addins()
-print(ins1)
-x:addsample(ins1, "samples/pad8bit8khz.wav")
-x:addnote(0, 0, 0, makenote(60, 1))
-x:write("out.xm")
