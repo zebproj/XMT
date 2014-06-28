@@ -113,7 +113,7 @@ void write_note(FILE *f, xm_note *n)
 }
 
 int8_t scale_8(double s){
-	return -(uint8_t)(s * 0x7f);
+	return (uint8_t)(s * 0x7f);
 }
 
 int8_t write_delta_data(double *buffer, FILE *out, int count, int8_t prev)
@@ -207,8 +207,8 @@ void init_xm_pat(xm_file *f)
 
 void init_xm_ins(xm_file *f, xm_ins *i)
 {
-	i->size = 0x1d;
-	//i->size = 0x107;
+	//i->size = 0x1d;
+	i->size = 0x107;
 	memset(i->name, 0, sizeof(char) * 22);
 	i->type = 0; 
 	i->num_samples = 0;
@@ -366,33 +366,39 @@ void write_pattern_data(xm_file *f)
 
 void write_sample_data(xm_file *f, int insnum)
 {
-		xm_sample *s = &f->ins[insnum].sample[0];
-		//init_xm_sample(s);
-		fwrite(&s->length, sizeof(uint32_t), 1, f->file);
-		fwrite(&s->loop_start, sizeof(uint32_t), 1, f->file);
-		fwrite(&s->loop_length, sizeof(uint32_t), 1, f->file);
-		fwrite(&s->volume, sizeof(uint8_t), 1, f->file);
-		fwrite(&s->finetune, sizeof(int8_t), 1, f->file);
-		fwrite(&s->type, sizeof(uint8_t), 1, f->file);
-		fwrite(&s->panning, sizeof(uint8_t), 1, f->file);
-		fwrite(&s->nn, sizeof(int8_t), 1, f->file);
-		fwrite(&s->reserved, sizeof(int8_t), 1, f->file);
-		fwrite(&s->sample_name, sizeof(char), 22, f->file);
-		//uint8_t buffer[BSIZE];
-        double buffer[BSIZE];
-		int count;
-		int8_t prev = 0;
-        
-        if(s->samptype == 0 ){
-            while(count != 0)
-            {
-                count = sf_read_double(s->sfile, buffer, BSIZE);
-                prev = write_delta_data(buffer,f->file, count, prev);
+        int sampnum = f->ins[insnum].num_samples;
+        int i;
+        printf("there are %d samples\n", sampnum);
+        for(i = 0; i < sampnum; i++)
+        {
+            xm_sample *s = &f->ins[insnum].sample[i];
+            //init_xm_sample(s);
+            fwrite(&s->length, sizeof(uint32_t), 1, f->file);
+            fwrite(&s->loop_start, sizeof(uint32_t), 1, f->file);
+            fwrite(&s->loop_length, sizeof(uint32_t), 1, f->file);
+            fwrite(&s->volume, sizeof(uint8_t), 1, f->file);
+            fwrite(&s->finetune, sizeof(int8_t), 1, f->file);
+            fwrite(&s->type, sizeof(uint8_t), 1, f->file);
+            fwrite(&s->panning, sizeof(uint8_t), 1, f->file);
+            fwrite(&s->nn, sizeof(int8_t), 1, f->file);
+            fwrite(&s->reserved, sizeof(int8_t), 1, f->file);
+            fwrite(&s->sample_name, sizeof(char), 22, f->file);
+            //uint8_t buffer[BSIZE];
+            double buffer[BSIZE];
+            int count;
+            int8_t prev = 0;
+            
+            if(s->samptype == 0 ){
+                while(count != 0)
+                {
+                    count = sf_read_double(s->sfile, buffer, BSIZE);
+                    prev = write_delta_data(buffer,f->file, count, prev);
+                }
+                sf_close(s->sfile);
+            }else if(s->samptype == 1){
+                int i;
+                write_delta_data(s->sampbuf, f->file, s->length, prev);
             }
-            sf_close(s->sfile);
-        }else if(s->samptype == 1){
-            int i;
-            write_delta_data(s->sampbuf, f->file, s->length, prev);
         }
         //while(count != 0)
         //{
@@ -412,7 +418,6 @@ void write_instrument_data(xm_file *f)
 		fwrite(&f->ins[i].type, sizeof(uint8_t), 1, f->file);
 		fwrite(&f->ins[i].num_samples, sizeof(uint16_t), 1, f->file);
 		if(f->ins[i].num_samples!= 0){
-			fwrite(&f->ins[i].sample_header_size, sizeof(uint16_t), 1, f->file);
 			fwrite(&f->ins[i].sample_header_size, sizeof(uint16_t), 1, f->file);
 			fwrite(&f->ins[i].sample_map, sizeof(uint8_t), 96, f->file);
 			fwrite(&f->ins[i].volume_points, sizeof(point), 12, f->file);
