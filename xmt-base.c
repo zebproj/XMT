@@ -221,8 +221,8 @@ void init_xm_ins(xm_file *f, xm_ins *i)
 		i->envelope_points[k].y = 0;
 	}
 	i->sample_header_size = 0x28;
-	i->num_volume_points = 0;
-	i->num_envelope_points = 0;
+	i->num_volume_points = 2;
+	i->num_envelope_points = 2;
 	i->vol_sustain = 0x0;
 	i->vol_loop_start = 0;
 	i->vol_loop_end = 0;
@@ -417,8 +417,9 @@ void write_instrument_data(xm_file *f)
 		fwrite(f->ins[i].name, sizeof(char), 22, f->file);
 		fwrite(&f->ins[i].type, sizeof(uint8_t), 1, f->file);
 		fwrite(&f->ins[i].num_samples, sizeof(uint16_t), 1, f->file);
+        printf("the number of samples is %d\n", f->ins[i].num_samples);
 		if(f->ins[i].num_samples!= 0){
-			fwrite(&f->ins[i].sample_header_size, sizeof(uint16_t), 1, f->file);
+			fwrite(&f->ins[i].sample_header_size, sizeof(uint32_t), 1, f->file);
 			fwrite(&f->ins[i].sample_map, sizeof(uint8_t), 96, f->file);
 			fwrite(&f->ins[i].volume_points, sizeof(point), 12, f->file);
 			fwrite(&f->ins[i].envelope_points, sizeof(point), 12, f->file);
