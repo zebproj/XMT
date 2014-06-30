@@ -51,7 +51,7 @@ end
 
 function XMT:transpose(ins, samp, nn, fine)
     fine = fine or 0
-    xm_transpose(self.xm, ins, samp, nn, fine)
+    xm_transpose(self.xm, ins - 1, samp, nn, fine)
 end
 
 function XMT:write(filename)
