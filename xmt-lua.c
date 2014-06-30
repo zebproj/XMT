@@ -111,18 +111,19 @@ static int L_addbuffer(lua_State *L)
     int ins = lua_tonumber(L, 2);
     int size = lua_tointeger(L, 3);
     double buffer[size];
-
     int c;
+    luaL_checktype(L, 4, LUA_TTABLE);
+    printf("the size of the table is %d\n", lua_objlen(L, 4));
     for(c = 1; c <= size; c++)
     {
-        lua_pushnumber(L, c);
-        lua_gettable(L, 4);
+        lua_rawgeti(L, 4, c);
         buffer[c - 1] = lua_tonumber(L, -1);
+        printf("position %d is %g\n", c, buffer[c - 1]);
+        lua_pop(L, 1);
     }
-
     xm_samp_params sparams = new_buf(buffer,size);
     add_samp(f, &sparams, ins);
-    return 1;
+    return 0;
 }
 
 static int L_transpose(lua_State *L)

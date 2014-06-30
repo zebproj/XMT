@@ -46,7 +46,8 @@ function XMT:addsample(ins, file)
 end
 
 function XMT:addbuffer(ins, buf)
-    xm_addbuffer(self.xm, ins, #buf, buf)
+    bufsize = #buf
+    xm_addbuffer(self.xm, ins, bufsize, buf)
 end
 
 function XMT:transpose(ins, samp, nn, fine)
