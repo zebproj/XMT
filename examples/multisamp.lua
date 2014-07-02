@@ -1,0 +1,8 @@
+require("xmt")
+x = XMT:create({nchan = 4})
+ins1 = x:addins()
+ins2 = x:addins()
+x:addsample(ins1, "../samples/sine.wav")
+x:addsample(ins1, "../samples/sine.wav")
+x:addsample(ins2, "../samples/sine.wav")
+x:write("multisamp.xm")

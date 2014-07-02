@@ -29,7 +29,7 @@ typedef struct
 	uint16_t num_instruments;
 	uint16_t freq_table;
 	uint16_t speed;
-	uint16_t BPM;
+	uint16_t bpm;
 	uint8_t ptable[256];
 }
 xm_params;
@@ -159,7 +159,7 @@ typedef struct
     uint16_t num_instruments;
     uint16_t freq_table;
     uint16_t speed;
-    uint16_t BPM;
+    uint16_t bpm;
     uint8_t ptable[256];
 
     xm_pat pat[256];
@@ -170,7 +170,7 @@ xm_file;
 void init_xm_params(xm_params *p);
 void set_nchan(xm_params *p, uint8_t n);
 void init_xm_file(xm_file *f, xm_params *p);
-long add_samp(xm_file *f, xm_samp_params *s, uint8_t ins);
+int add_samp(xm_file *f, xm_samp_params *s, uint8_t ins);
 xm_samp_params new_samp(const char *filename);
 xm_samp_params new_buf(double *buf, int size);
 int add_instrument(xm_file *f);
@@ -189,3 +189,6 @@ void xm_transpose_sample(xm_file *f, uint8_t ins, uint8_t sample, uint8_t nn, ui
 void update_ptable(xm_file *f, uint8_t pos, uint8_t pnum);
 void xm_set_loop_mode(xm_file *f, uint8_t ins, uint8_t sample, uint8_t mode);
 void xm_set_nchan(xm_params *p, uint8_t n);
+void xm_set_bpm(xm_params *p, uint8_t bpm);
+void xm_set_speed(xm_params *p, uint8_t speed);
+int create_pattern(xm_file *f, uint16_t size);

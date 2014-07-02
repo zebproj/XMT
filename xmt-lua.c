@@ -102,7 +102,8 @@ static int L_addsample(lua_State *L)
     int ins = lua_tonumber(L, 2);
     const char *fname = lua_tostring(L, 3);
     xm_samp_params sparams = new_samp(fname);
-    add_samp(f, &sparams, ins);
+    int s = add_samp(f, &sparams, ins);
+    lua_pushinteger(L, s);
     return 1;
 }
 static int L_addbuffer(lua_State *L)
@@ -113,17 +114,16 @@ static int L_addbuffer(lua_State *L)
     double buffer[size];
     int c;
     luaL_checktype(L, 4, LUA_TTABLE);
-    printf("the size of the table is %d\n", lua_objlen(L, 4));
     for(c = 1; c <= size; c++)
     {
         lua_rawgeti(L, 4, c);
         buffer[c - 1] = lua_tonumber(L, -1);
-        printf("position %d is %g\n", c, buffer[c - 1]);
         lua_pop(L, 1);
     }
     xm_samp_params sparams = new_buf(buffer,size);
-    add_samp(f, &sparams, ins);
-    return 0;
+    int s = add_samp(f, &sparams, ins);
+    lua_pushinteger(L, s);
+    return 1;
 }
 
 static int L_transpose(lua_State *L)
@@ -163,6 +163,29 @@ static int L_set_nchan(lua_State *L)
     return 1 ;
 }
 
+static int L_set_speed(lua_State *L)
+{
+    xm_params *p = (xm_params *)lua_touserdata(L, 1);
+    int speed = lua_tointeger(L, 2);
+    xm_set_speed(p, speed);
+    return 1;
+}
+static int L_set_bpm(lua_State *L)
+{
+    xm_params *p = (xm_params *)lua_touserdata(L, 1);
+    int bpm = lua_tointeger(L, 2);
+    xm_set_bpm(p, bpm);
+    return 1;
+}
+
+static int L_create_pattern(lua_State *L)
+{
+    xm_file *f = (xm_file *)lua_touserdata(L, 1);
+    int size = lua_tointeger(L, 2);
+    lua_pushnumber(L, create_pattern(f, size));
+    return 1;
+}
+
 static LEntry entry[] = {
     {"hello", L_hello},
     {"xm_write", L_write},
@@ -177,8 +200,12 @@ static LEntry entry[] = {
 	{"xm_update_ptable", L_update_ptable},
 	{"xm_set_loop_mode", L_set_loop_mode},
 	{"xm_set_nchan", L_set_nchan},
+	{"xm_set_speed", L_set_speed},
+	{"xm_set_bpm", L_set_bpm},
+	{"xm_create_pattern", L_create_pattern},
     {NULL, NULL}
 };
+
 
 int luaopen_luaxmt(lua_State *L){
     int i = 0;

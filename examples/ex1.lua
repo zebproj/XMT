@@ -40,13 +40,12 @@ end
 chord = {"C-4", "D-4", "G-4", "B-4"}
 x = XMT:create({nchan = 4})
 ins1 = x:addins()
-ins2 = x:addins()
-x:addsample(ins1, "../samples/pad3.wav")
-x:addsample(ins2, "../samples/pad3.wav")
+x:addsamp(ins1, "../samples/pad3.wav")
 x:set_loop_mode(ins1, 0, XMT.FORWARD_LOOP)
-print(ins1)
-x:transpose(ins1, 0, 12)
-for i = 1, 5, 1 do x:update_ptable(i - 1, i - 1) end
+for i = 1, 5, 1 do 
+    x:create_pattern()
+    x:update_ptable(i - 1, i - 1) 
+end
 
 root = 12
 vol = 0x30
@@ -65,7 +64,6 @@ noteblink(args)
 
 vol = vol - 0x10
 volstep = vol/0x30
-print(volstep)
 chan = 0
 for i = 0, 0x40 - 3, 1 do
     for chan = 0, 3, 1 do

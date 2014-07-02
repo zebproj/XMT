@@ -7,9 +7,9 @@
 #include "xmt-base.h"
 /*TODO: add error handling to file I/O */
 
-void xm_set_BPM(xm_file *f, uint8_t bpm) 
+void xm_set_bpm(xm_params *p, uint8_t bpm) 
 {
-	f->BPM =  bpm;
+	p->bpm =  bpm;
 }
 void xm_set_nchan(xm_params *p, uint8_t n)
 {
@@ -19,19 +19,19 @@ void xm_set_nchan(xm_params *p, uint8_t n)
 	p->num_channels = n + 1;
 	
 }
-void xm_set_speed(xm_file *f, uint8_t speed) 
+void xm_set_speed(xm_params *p, uint8_t speed) 
 {	
-	f->speed = speed;
+	p->speed = speed;
 }
 
 void init_xm_params(xm_params *p)
 {
 	memset(p->id_text, 0x20, sizeof(char) * 17);
 	sprintf(p->id_text, "Extended Module:");
-	memset(p->module_name, ' ', sizeof(char) * 20);
+	memset(p->module_name, 0x20, sizeof(char) * 20);
 	sprintf(p->module_name, "Test Module");
 	memset(p->tracker_name, 0x20, sizeof(char) * 20);
-	sprintf(p->tracker_name, "Milkytracker  ");
+	sprintf(p->tracker_name, "Milkytracker");
 	//sprintf(p->tracker_name, "FastTracker v2.00  ");
 	p->var = 0x1a;
 	p->version = 0x0104;
@@ -39,11 +39,11 @@ void init_xm_params(xm_params *p)
 	p->song_length = 0x01;
 	p->restart_position = 0x00;
 	p->num_channels = 0x08;
-	p->num_patterns= 0x01;
+	p->num_patterns= 0x00;
 	p->num_instruments= 0x99;
 	p->freq_table = LINEAR;
 	p->speed = 6;
-	p->BPM = 125;
+	p->bpm = 125;
 }
 
 void init_xm_file(xm_file *f, xm_params *p){
@@ -60,13 +60,20 @@ void init_xm_file(xm_file *f, xm_params *p){
 	f->restart_position = p->restart_position;
 	f->num_channels = p->num_channels;
 	f->num_patterns= p->num_patterns;
+    printf("1 there are %d patterns\n", f->num_patterns);
 	f->num_instruments= p->num_instruments;
 	f->freq_table = p->freq_table;
 	f->speed = p->speed;
-	f->BPM = p->BPM;
+	f->bpm = p->bpm;
 	//initialize pattern table
 	memset(f->ptable, 0x0, sizeof(uint8_t) * 256);
-	init_xm_pat(f);
+    int i;
+    for(i = 0; i < 256; i++)
+    {
+	    init_xm_pat(f, i, 0x40);
+    }
+    printf("2 there are %d patterns\n", f->num_patterns);
+    //init_xm_pat(f);
 
 }
 
@@ -134,10 +141,11 @@ void write_header_data(xm_file *f){
 	fwrite(&f->restart_position, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->num_channels, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->num_patterns, sizeof(uint16_t), 1, f->file);
+    printf("there are %d patterns\n", f->num_patterns);
 	fwrite(&f->num_instruments, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->freq_table, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->speed, sizeof(uint16_t), 1, f->file);
-	fwrite(&f->BPM, sizeof(uint16_t), 1, f->file);
+	fwrite(&f->bpm, sizeof(uint16_t), 1, f->file);
 	fwrite(f->ptable, sizeof(uint8_t), 256, f->file);
 }
 

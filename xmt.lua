@@ -12,7 +12,9 @@ function makenote(nn, ins, vol, fx, param)
 end
 
 XMT.PARAMS = {
-    nchan = xm_set_nchan
+    nchan = xm_set_nchan,
+    speed = xm_set_speed,
+    bpm = xm_set_bpm
 }
 
 function XMT:create(args)
@@ -22,11 +24,13 @@ function XMT:create(args)
     setmetatable(o, self)
     self.__index = self
     p = xm_init_xm_params()
-  
+    
+    if(args) then
     for param, val in pairs(args) do
+        print(param, val)
         XMT.PARAMS[param](p, val)
     end
-
+    end
     o.xm = xm_new(p)
 
     return o
@@ -41,18 +45,17 @@ function XMT:addnote(patnum, chan, row, note)
     xm_makenote(note.nn, note.ins, note.vol, note.fx, note.param))
 end
 
-function XMT:addsample(ins, file)
-    xm_addsample(self.xm, ins, file)
+function XMT:addsamp(ins, file)
+    return xm_addsample(self.xm, ins, file)
 end
 
 function XMT:addbuffer(ins, buf)
-    bufsize = #buf
-    xm_addbuffer(self.xm, ins, bufsize, buf)
+    return xm_addbuffer(self.xm, ins, #buf, buf)
 end
 
 function XMT:transpose(ins, samp, nn, fine)
     fine = fine or 0
-    xm_transpose(self.xm, ins - 1, samp, nn, fine)
+    xm_transpose(self.xm, ins, samp, nn, fine)
 end
 
 function XMT:write(filename)
@@ -67,3 +70,11 @@ function XMT:set_loop_mode(ins, samp, mode)
     xm_set_loop_mode(self.xm, ins, samp, mode)
 end
 
+function XMT:set_pat_len(pnum, len)
+    xm_set_pat_len(self.xm, pnum, len)
+end
+
+function XMT:create_pattern(size)
+    size = size or 0x40 
+    return xm_create_pattern(self.xm, size) - 1
+end
