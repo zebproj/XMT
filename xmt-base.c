@@ -151,6 +151,15 @@ void write_header_data(xm_file *f){
 
 void write_xm_file(xm_file *f, const char *filename)
 {
+    if(f->num_instruments == 0x99){
+        printf("adding instrument...");
+        add_instrument(f);
+    }
+    if(f->num_patterns == 0) 
+    {
+        printf("creating pattern...");
+        create_pattern(f, 0x40);
+    }
 	f->file = fopen(filename, "wb");
 	write_header_data(f);
 	write_pattern_data(f);

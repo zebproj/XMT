@@ -3,7 +3,7 @@ require("luaxmt")
 XMT = {}
 XMT.NOTEOFF = 108
 XMT.NO_LOOP = 0
-XMT.FORWARD_LOOP = 1
+XMT.FORWARD = 1
 XMT.PING_PONG = 2
 XMT.BIT_16 = 4
 function makenote(nn, ins, vol, fx, param)
@@ -18,7 +18,7 @@ XMT.PARAMS = {
 }
 
 function XMT:create(args)
-    args = args or nil
+    args = args or {}
     o = args.o or {}
 
     setmetatable(o, self)
@@ -46,16 +46,17 @@ function XMT:addnote(patnum, chan, row, note)
 end
 
 function XMT:addsamp(ins, file)
-    return xm_addsample(self.xm, ins, file)
+    return {ins = ins, samp = xm_addsample(self.xm, ins, file)}
 end
 
-function XMT:addbuffer(ins, buf)
-    return xm_addbuffer(self.xm, ins, #buf, buf)
+function XMT:addbuf(ins, buf)
+    return {ins = ins, samp = xm_addbuffer(self.xm, ins, #buf, buf)}
 end
 
-function XMT:transpose(ins, samp, nn, fine)
+function XMT:transpose(samp, nn, fine)
     fine = fine or 0
-    xm_transpose(self.xm, ins, samp, nn, fine)
+    xm_transpose(self.xm, samp.ins, samp.samp, nn, fine)
+    return samp
 end
 
 function XMT:write(filename)
@@ -66,15 +67,16 @@ function XMT:update_ptable(pos, pnum)
     xm_update_ptable(self.xm, pos, pnum)
 end
 
-function XMT:set_loop_mode(ins, samp, mode)
-    xm_set_loop_mode(self.xm, ins, samp, mode)
+function XMT:set_loop_mode(samp, mode)
+    xm_set_loop_mode(self.xm, samp.ins, samp.samp, mode)
+    return samp
 end
 
 function XMT:set_pat_len(pnum, len)
     xm_set_pat_len(self.xm, pnum, len)
 end
 
-function XMT:create_pattern(size)
+function XMT:addpat(size)
     size = size or 0x40 
     return xm_create_pattern(self.xm, size) - 1
 end

@@ -1,3 +1,8 @@
+--[[
+"Generative Breakbeats"
+Paul Batchelor
+July 2014
+--]]
 require("xmt")
 
 math.randomseed(os.time())

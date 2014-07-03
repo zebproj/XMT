@@ -19,6 +19,6 @@ all:
 	make ${objects} luaxmt.so
 	cp luaxmt.so xmt.lua examples
 clean:
-	rm -rf ${objects}
+	rm -rf ${objects} luaxmt.so
 	rm -rf examples/*.xm
 	rm -rf examples/luaxmt.so examples/xmt.lua

@@ -38,7 +38,7 @@ xm_samp_params new_buf(double *buf, int size)
 }
 
 void xm_transpose_sample(xm_file *f, uint8_t ins, uint8_t sample, 
-        uint8_t nn, uint8_t fine)
+        int8_t nn, uint8_t fine)
 {
     f->ins[ins].sample[sample].nn = nn;
     f->ins[ins].sample[sample].finetune = fine;

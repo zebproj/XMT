@@ -1,3 +1,8 @@
+--[[
+"Isorhythmic Strings"
+Paul Batchelor
+July 2014
+--]]
 require("xmt")
 function n2m(str)
     local tbl = {}
@@ -40,10 +45,10 @@ end
 chord = {"C-4", "D-4", "G-4", "B-4"}
 x = XMT:create({nchan = 4})
 ins1 = x:addins()
-x:addsamp(ins1, "../samples/pad3.wav")
-x:set_loop_mode(ins1, 0, XMT.FORWARD_LOOP)
+x:set_loop_mode(x:addsamp(ins1, "../samples/pad3.wav"), XMT.FORWARD)
+
 for i = 1, 5, 1 do 
-    x:create_pattern()
+    x:addpat()
     x:update_ptable(i - 1, i - 1) 
 end
 

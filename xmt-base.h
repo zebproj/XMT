@@ -185,7 +185,7 @@ void add_note(xm_file *f, uint8_t patnum, uint8_t chan,
         uint8_t row, xm_note note);
 void remove_note(xm_file *f, uint8_t patnum, uint8_t chan, uint8_t row);
 
-void xm_transpose_sample(xm_file *f, uint8_t ins, uint8_t sample, uint8_t nn, uint8_t fine);
+void xm_transpose_sample(xm_file *f, uint8_t ins, uint8_t sample, int8_t nn, uint8_t fine);
 void update_ptable(xm_file *f, uint8_t pos, uint8_t pnum);
 void xm_set_loop_mode(xm_file *f, uint8_t ins, uint8_t sample, uint8_t mode);
 void xm_set_nchan(xm_params *p, uint8_t n);
