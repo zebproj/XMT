@@ -42,7 +42,6 @@ function noteblink(args)
     end
 end
 
-chord = {"C-4", "D-4", "G-4", "B-4"}
 x = XMT:create({nchan = 4})
 ins1 = x:addins()
 x:set_loop_mode(x:addsamp(ins1, "../samples/pad3.wav"), XMT.FORWARD)

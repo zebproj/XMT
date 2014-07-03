@@ -1,3 +1,26 @@
+/*----------------------------------------------------------------------------
+  XMT: a library designed to generate XM files.
+  Copyright (c) 2014 Paul Batchelor All rights reserved.
+    http://www.batchelorsounds.com
+
+  This file is part of XMT.
+
+  XMT is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+  U.S.A.
+-----------------------------------------------------------------------------*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -60,7 +83,6 @@ void init_xm_file(xm_file *f, xm_params *p){
 	f->restart_position = p->restart_position;
 	f->num_channels = p->num_channels;
 	f->num_patterns= p->num_patterns;
-    printf("1 there are %d patterns\n", f->num_patterns);
 	f->num_instruments= p->num_instruments;
 	f->freq_table = p->freq_table;
 	f->speed = p->speed;
@@ -72,7 +94,6 @@ void init_xm_file(xm_file *f, xm_params *p){
     {
 	    init_xm_pat(f, i, 0x40);
     }
-    printf("2 there are %d patterns\n", f->num_patterns);
     //init_xm_pat(f);
 
 }
@@ -141,7 +162,6 @@ void write_header_data(xm_file *f){
 	fwrite(&f->restart_position, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->num_channels, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->num_patterns, sizeof(uint16_t), 1, f->file);
-    printf("there are %d patterns\n", f->num_patterns);
 	fwrite(&f->num_instruments, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->freq_table, sizeof(uint16_t), 1, f->file);
 	fwrite(&f->speed, sizeof(uint16_t), 1, f->file);
@@ -152,12 +172,10 @@ void write_header_data(xm_file *f){
 void write_xm_file(xm_file *f, const char *filename)
 {
     if(f->num_instruments == 0x99){
-        printf("adding instrument...");
         add_instrument(f);
     }
     if(f->num_patterns == 0) 
     {
-        printf("creating pattern...");
         create_pattern(f, 0x40);
     }
 	f->file = fopen(filename, "wb");

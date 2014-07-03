@@ -39,4 +39,4 @@ for i = 1, numpats, 1 do
     end
 end
 
-x:write("out.xm")
+x:write("ex3.xm")

@@ -1,3 +1,26 @@
+/*----------------------------------------------------------------------------
+  XMT: a library designed to generate XM files.
+  Copyright (c) 2014 Paul Batchelor All rights reserved.
+    http://www.batchelorsounds.com
+
+  This file is part of XMT.
+
+  XMT is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+  U.S.A.
+-----------------------------------------------------------------------------*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -94,9 +117,6 @@ void init_xm_sample(xm_sample *s, xm_samp_params *param)
 	s->reserved = 0;
     s->nchnls = info.channels;
 	memset(s->sample_name, 0, sizeof(char) * 22);
-	//memset(s->temp_buf, 0, sizeof(char) * 100);
-	//strcpy(s->sample_name, "test sample");
-    //TODO-- figure out how to free buffer data
     if(s->samptype == 1) free(param->buf);
 }
 
@@ -110,7 +130,6 @@ int add_samp(xm_file *f, xm_samp_params *s, uint8_t ins)
 	xm_ins *i = &f->ins[ins];
 	i->num_samples++;
 	init_xm_sample(&i->sample[i->num_samples - 1], s);
-    printf("3 there are %d patterns\n", f->num_patterns);
 	return i->num_samples - 1;
 }
 
@@ -131,23 +150,7 @@ void write_sample_data(xm_file *f, int insnum)
             fwrite(&s->nn, sizeof(int8_t), 1, f->file);
             fwrite(&s->reserved, sizeof(int8_t), 1, f->file);
             fwrite(&s->sample_name, sizeof(char), 22, f->file);
-            //uint8_t buffer[BSIZE];
-            //double buffer[BSIZE];
-            //int count;
-            //int8_t prev = 0;
-            //
-            //if(s->samptype == 0 ){
-            //    while(count != 0)
-            //    {
-            //        count = sf_read_double(s->sfile, buffer, BSIZE);
-            //        prev = write_delta_data(buffer,f->file, count, prev);
-            //    }
-            //    sf_close(s->sfile);
-            //}else if(s->samptype == 1){
-            //    int i;
-            //    write_delta_data(s->sampbuf, f->file, s->length, prev);
-            //}
-        }
+       }
         for(i = 0; i < sampnum; i++)
         {
             xm_sample *s = &f->ins[insnum].sample[i];

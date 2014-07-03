@@ -89,7 +89,7 @@ altsnare = x:addins() x:addsamp(altsnare , "../samples/snare2.wav")
 
 
 for pat = 0, 3, 1 do
-    x:create_pattern(patlen)
+    x:addpat(patlen)
     x:update_ptable(pat, pat)
     --x:set_pat_len(pat, 0x80)
     --x:set_pat_len(pat + 1, 0x80)
