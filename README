@@ -1,0 +1,19 @@
+XMT
+By Paul Batchelor
+
+
+Description:
+------------
+XM tools (abbreviated XMT) is a library written in C that enables the creation of XM files. 
+
+Requirements:
+-------------
+Lua 5.1
+libsndfile
+
+
+Installation:
+-------------
+To compile XMT, run "make".
+To install, run "sudo make install"
+To uninstall, run "sudo make uninstall"
